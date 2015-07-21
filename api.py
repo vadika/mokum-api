@@ -8,6 +8,7 @@ import json
 from bs4 import BeautifulSoup
 import http.cookiejar
 import urllib.request, urllib.parse, urllib.error
+from urllib.error import URLError, HTTPError
 import socket
 
 
@@ -26,42 +27,33 @@ class mokum:
         soup=BeautifulSoup(ret.read().decode('utf8', 'ignore')
             ,"html.parser")
         for tags in soup.findAll("meta", {'name': 'csrf-token'}):
-            auth_token = tags['content']
-
-        print (auth_token)
-
+            self.auth_token = tags['content']
 
 
     def login(self, username, remote_key):
-       failcode=False
-        try:
-            details = urllib.parse.urlencode({ 'utf8': '✓',
+        failcode=True
+        details = urllib.parse.urlencode({ 'utf8': '✓',
                                                'user[email]': username,
                                                'user[password]': remote_key,
-                                               "user[remember_me]":"1",
-                                               "authenticity_token":auth_token,
+                                               "user[remember_me]":"0",
+                                               "authenticity_token":self.auth_token,
                                                "commit":"Log in",
                                                })
-            details = details.encode('UTF-8')
-
+        details = details.encode('utf8')
+        try:
             url = urllib.request.Request(self.loginurl, details)
             url.add_header("Referer",self.loginurl)
 
-            responsedata = self.opener.open(url)
-            errcode=responsedata.getcode()
-            print(responsedata.geturl())
-            response=responsedata.read().decode('utf8', 'ignore')
+            responsedata=self.opener.open(url)
+
+        except HTTPError as e:
+            print("fail with %d"%e.code)
 
 
-        except urllib.error.HTTPError as e:
-            responsedata = e.read().decode('utf8', 'ignore')
-            failcode = False
+        if responsedata.geturl()!="https://mokum.ru/":
+            failcode=False
 
-        except urllib.error.URLError as e:
-            print (e.code)
-            failcode = True
-
-        print(ascii(response))
+        response=responsedata.read().decode('utf8', 'ignore')
         return failcode
 
     def post(self, posttext):
@@ -73,5 +65,13 @@ class mokum:
         commentid=0
         return commentid
 
+
 m = mokum()
-m.login("vadikas@gmail.com", "abanamat")
+
+if m.login("vadikas@gmail.com", "abanamat")==True:
+    print ("logged in")
+else:
+    print ("not logged in")
+
+id=m.post("Robots.txt = Роботз дот ти экс ти")
+print ("post id=",id)

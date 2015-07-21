@@ -68,7 +68,7 @@ class mokum:
 
 m = mokum()
 
-if m.login("vadikas@gmail.com", "abanamat")==True:
+if m.login("vadikas@yandex.ru", "password")==True:
     print ("logged in")
 else:
     print ("not logged in")
